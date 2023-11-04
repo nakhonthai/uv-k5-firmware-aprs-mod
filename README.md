@@ -15,6 +15,17 @@ For improved/better firmware and new features, you can find the following reposi
 * https://github.com/Tunas1337/uv-k5-firmware (Check the branches)
 * https://github.com/rebezhir/openquack for Russian users
 
+# Spectrum scanner how to operate:
+
+* press **UP** / **DOWN** key to change frequency
+* press **1** / **7** to control measurement time (increasing "sensitivity")
+* press **2** / **8** to to set frequency change step
+* press **9** / **3** for zoom in / zoom out
+* press and hold **\*** / **F** to set squelch level
+* press **6** to BW 6.25KHz->12.5KHz->25KHz
+* press **0** to mode FM->AM->SSB->BYP->RAW
+* press **EXIT** to disable spectrum view
+
 # Compiler
 
 arm-none-eabi GCC version 10.3.1 is recommended, which is the current version on Ubuntu 22.04.03 LTS.
