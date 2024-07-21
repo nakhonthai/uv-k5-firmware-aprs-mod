@@ -14,7 +14,7 @@
  *     limitations under the License.
  */
 
-#include "app/aircopy.h"
+#include "aircopy.h"
 #include "audio.h"
 #include "driver/bk4819.h"
 #include "driver/crc.h"
@@ -48,10 +48,10 @@ void AIRCOPY_SendMessage(void)
 	if (++gAirCopyBlockNumber >= 0x78) {
 		gAircopyState = AIRCOPY_COMPLETE;
 	}
-	RADIO_SetTxParameters();
+	RADIO_enableTX();
 	BK4819_SendFSKData(g_FSK_Buffer);
 	BK4819_SetupPowerAmplifier(0, 0);
-	BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1, false);
+	BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_PA_ENABLE, false);
 	gAircopySendCountdown = 30;
 }
 
@@ -78,12 +78,9 @@ void AIRCOPY_StorePacket(void)
 
 		CRC = CRC_Calculate(&g_FSK_Buffer[1], 2 + 64);
 		if (g_FSK_Buffer[34] == CRC) {
-			const uint16_t *pData;
-			uint16_t Offset;
-
-			Offset = g_FSK_Buffer[1];
+			uint16_t Offset = g_FSK_Buffer[1];
 			if (Offset < 0x1E00) {
-				pData = &g_FSK_Buffer[2];
+				const uint16_t *pData = &g_FSK_Buffer[2];
 				for (i = 0; i < 8; i++) {
 					EEPROM_WriteBuffer(Offset, pData);
 					pData += 4;

@@ -80,7 +80,7 @@ void BK4819_SetupSquelch(uint8_t SquelchOpenRSSIThresh,
 
 void BK4819_SetAF(BK4819_AF_Type_t AF);
 void BK4819_RX_TurnOn(void);
-void BK4819_PickRXFilterPathBasedOnFrequency(uint32_t Frequency);
+void BK4819_SelectFilter(uint32_t Frequency);
 void BK4819_DisableScramble(void);
 void BK4819_EnableScramble(uint8_t Type);
 void BK4819_DisableVox(void);
@@ -99,7 +99,7 @@ void BK4819_PrepareTransmit(void);
 void BK4819_TxOn_Beep(void);
 void BK4819_ExitSubAu(void);
 
-void BK4819_Conditional_RX_TurnOn_and_GPIO6_Enable(void);
+void BK4819_EnableRX(void);
 
 void BK4819_EnterDTMF_TX(bool bLocalLoopback);
 void BK4819_ExitDTMF_TX(bool bKeep);
@@ -144,7 +144,6 @@ void BK4819_PlayRogerMDC(void);
 void BK4819_Enable_AfDac_DiscMode_TxDsp(void);
 
 void BK4819_GetVoxAmp(uint16_t *pResult);
-void BK4819_SetScrambleFrequencyControlWord(uint32_t Frequency);
 void BK4819_PlayDTMFEx(bool bLocalLoopback, char Code);
 
 void BK4819_ToggleAFBit(bool on);
@@ -153,5 +152,6 @@ uint16_t BK4819_GetRegValue(RegisterSpec s);
 void BK4819_SetRegValue(RegisterSpec s, uint16_t v);
 void BK4819_SetModulation(ModulationType type);
 void BK4819_TuneTo(uint32_t f, bool precise);
+void BK4819_SetToneFrequency(uint16_t f);
 
 #endif

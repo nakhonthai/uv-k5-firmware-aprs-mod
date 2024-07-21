@@ -87,6 +87,7 @@ static const char MenuList[][8] = {
 // 0x30
     "ChDele",
     "Reset",
+    "Upconv",
     "Tx 350",
     "F Lock",
     "Tx 200",
@@ -171,6 +172,7 @@ const char gSubMenuBacklight[8][7] = {"OFF",   "5 sec", "10 sec", "20 sec",
 
 static const char *defaultEnableDisable[3] = {"DEFAULT", "ENABLE", "DISABLE"};
 static const char *offOn[3] = {"OFF", "ON"};
+static const char *upconverterFreqNames[3] = {"OFF", "50M", "125M"};
 
 bool gIsInSubMenu;
 
@@ -186,7 +188,7 @@ void UI_DisplayMenu(void) {
   memset(gFrameBuffer, 0, sizeof(gFrameBuffer));
 
   uint8_t offset = Clamp(gMenuCursor - 2, 0, gMenuListCount - 6);
-  for (int i = 0; i < 6; ++i) {
+  for (i = 0; i < 6; ++i) {
     const char *s = MenuList[i + offset];
     bool isCurrent = gMenuCursor == i + offset;
     if (isCurrent) {
@@ -429,6 +431,10 @@ void UI_DisplayMenu(void) {
     strcpy(String, gSubMenu_RESET[gSubMenuSelection]);
     break;
 
+  case MENU_UPCONVERTER:
+    strcpy(String, upconverterFreqNames[gSubMenuSelection]);
+    break;
+
   case MENU_F_LOCK:
     strcpy(String, gSubMenu_F_LOCK[gSubMenuSelection]);
     break;
@@ -480,7 +486,7 @@ void UI_DisplayMenu(void) {
 
     NUMBER_ToDigits((uint8_t)gSubMenuSelection, String);
     Offset = (gMenuCursor == MENU_D_LIST) ? 2 : 3;
-    UI_DisplaySmallDigits(Offset, String + (8 - Offset), 105, 0);
+    UI_DisplaySmallDigits(Offset, String + (9 - Offset), 105, 0);
   }
 
   if (gMenuCursor == MENU_SLIST1 || gMenuCursor == MENU_SLIST2) {

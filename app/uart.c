@@ -16,7 +16,7 @@
 
 #include <string.h>
 #if !defined(ENABLE_OVERLAY)
-#include "ARMCM0.h"
+#include "../external/CMSIS_5/Device/ARM/ARMCM0/Include/ARMCM0.h"
 #endif
 #if defined(ENABLE_FMRADIO)
 #include "app/fm.h"
@@ -402,12 +402,12 @@ static void CMD_052F(const uint8_t *pBuffer) {
 
   gEeprom.DUAL_WATCH = DUAL_WATCH_OFF;
   gEeprom.CROSS_BAND_RX_TX = CROSS_BAND_OFF;
-  gEeprom.RX_CHANNEL = 0;
+  gEeprom.RX_VFO = 0;
   gEeprom.DTMF_SIDE_TONE = false;
   gEeprom.VfoInfo[0].FrequencyReverse = false;
   gEeprom.VfoInfo[0].pRX = &gEeprom.VfoInfo[0].ConfigRX;
   gEeprom.VfoInfo[0].pTX = &gEeprom.VfoInfo[0].ConfigTX;
-  gEeprom.VfoInfo[0].FREQUENCY_DEVIATION_SETTING = FREQUENCY_DEVIATION_OFF;
+  gEeprom.VfoInfo[0].OFFSET_DIR = FREQUENCY_DEVIATION_OFF;
   gEeprom.VfoInfo[0].DTMF_PTT_ID_TX_MODE = PTT_ID_OFF;
   gEeprom.VfoInfo[0].DTMF_DECODING_ENABLE = false;
   if (gCurrentFunction == FUNCTION_POWER_SAVE) {

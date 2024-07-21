@@ -314,7 +314,7 @@ static void ToggleTX(bool on) {
     ToggleRX(false);
   }
 
-  BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_RED, on);
+  BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, on);
 
   if (on) {
     ToggleAudio(false);
@@ -349,8 +349,8 @@ static void ToggleTX(bool on) {
 
     SetF(fMeasure, true);
   }
-  BK4819_ToggleGpioOut(BK4819_GPIO6_PIN2, !on);
-  BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1, on);
+  BK4819_ToggleGpioOut(BK4819_GPIO0_PIN28_RX_ENABLE, !on);
+  BK4819_ToggleGpioOut(BK4819_GPIO1_PIN29_PA_ENABLE, on);
 }
 
 // Scan info
@@ -440,7 +440,7 @@ static void UpdateRssiTriggerLevel(bool inc) {
 }
 
 static void ApplyPreset(FreqPreset p) {
-  currentFreq = p.fStart;
+  currentFreq = GetTuneF(p.fStart);
   settings.scanStepIndex = p.stepSizeIndex;
   settings.listenBw = p.listenBW;
   settings.modulationType = p.modulationType;
@@ -454,11 +454,12 @@ static void ApplyPreset(FreqPreset p) {
 
 static void SelectNearestPreset(bool inc) {
   FreqPreset p;
+  uint32_t f = GetScreenF(currentFreq);
   const uint8_t SZ = ARRAY_SIZE(freqPresets);
   if (inc) {
     for (uint8_t i = 0; i < SZ; ++i) {
       p = freqPresets[i];
-      if (currentFreq < p.fStart) {
+      if (f < p.fStart) {
         ApplyPreset(p);
         return;
       }
@@ -466,7 +467,7 @@ static void SelectNearestPreset(bool inc) {
   } else {
     for (int i = SZ - 1; i >= 0; --i) {
       p = freqPresets[i];
-      if (currentFreq > p.fEnd) {
+      if (f > p.fEnd) {
         ApplyPreset(p);
         return;
       }
@@ -477,9 +478,9 @@ static void SelectNearestPreset(bool inc) {
 
 static void UpdateScanStep(bool inc) {
   if (inc && settings.scanStepIndex < STEP_100_0kHz) {
-    settings.scanStepIndex++;
+    ++settings.scanStepIndex;
   } else if (!inc && settings.scanStepIndex > 0) {
-    settings.scanStepIndex--;
+    --settings.scanStepIndex;
   } else {
     return;
   }
@@ -530,7 +531,7 @@ static void ToggleModulation() {
   if (settings.modulationType == MOD_RAW) {
     settings.modulationType = MOD_FM;
   } else {
-    settings.modulationType++;
+    ++settings.modulationType;
   }
   BK4819_SetModulation(settings.modulationType);
   redrawScreen = true;
@@ -540,8 +541,12 @@ static void ToggleListeningBW() {
   if (settings.listenBw == BK4819_FILTER_BW_NARROWER) {
     settings.listenBw = BK4819_FILTER_BW_WIDE;
   } else {
-    settings.listenBw++;
+    ++settings.listenBw;
   }
+
+#ifdef ENABLE_ALL_REGISTERS
+  BK4819_WriteRegister(0x43, GetBWRegValueForListen());
+#endif
   redrawScreen = true;
 }
 
@@ -558,7 +563,7 @@ static void ToggleStepsCount() {
   if (settings.stepsCount == STEPS_128) {
     settings.stepsCount = STEPS_16;
   } else {
-    settings.stepsCount--;
+    --settings.stepsCount;
   }
   settings.frequencyChangeStep = GetBW() >> 1;
   RelaunchScan();
@@ -623,9 +628,9 @@ static void DrawStatus() {
     } else {
 #endif
       const FreqPreset *p = NULL;
+      uint32_t f = GetScreenF(currentFreq);
       for (uint8_t i = 0; i < ARRAY_SIZE(freqPresets); ++i) {
-        if (currentFreq >= freqPresets[i].fStart &&
-            currentFreq < freqPresets[i].fEnd) {
+        if (f >= freqPresets[i].fStart && f < freqPresets[i].fEnd) {
           p = &freqPresets[i];
         }
       }
@@ -683,18 +688,21 @@ static void DrawNums() {
   }
 
   if (IsCenterMode()) {
-    sprintf(String, "%u.%05u \xB1%u.%02uk", currentFreq / 100000,
-            currentFreq % 100000, settings.frequencyChangeStep / 100,
+    uint32_t cf = GetScreenF(currentFreq);
+    sprintf(String, "%u.%05u \xB1%u.%02uk", cf / 100000, cf % 100000,
+            settings.frequencyChangeStep / 100,
             settings.frequencyChangeStep % 100);
     UI_PrintStringSmallest(String, 36, 49, false, true);
   } else {
-    sprintf(String, "%u.%05u", GetFStart() / 100000, GetFStart() % 100000);
+    uint32_t fs = GetScreenF(GetFStart());
+    uint32_t fe = GetScreenF(GetFEnd());
+    sprintf(String, "%u.%05u", fs / 100000, fs % 100000);
     UI_PrintStringSmallest(String, 0, 49, false, true);
 
     sprintf(String, "\xB1%uk", settings.frequencyChangeStep / 100);
     UI_PrintStringSmallest(String, 52, 49, false, true);
 
-    sprintf(String, "%u.%05u", GetFEnd() / 100000, GetFEnd() % 100000);
+    sprintf(String, "%u.%05u", fe / 100000, fe % 100000);
     UI_PrintStringSmallest(String, 93, 49, false, true);
   }
 }
@@ -917,6 +925,7 @@ static void OnKeyDownFreqInput(uint8_t key) {
     redrawScreen = true;
     break;
   case KEY_MENU:
+    tempFreq = GetTuneF(tempFreq);
     if (tempFreq < F_MIN || tempFreq > F_MAX) {
       break;
     }
@@ -1076,12 +1085,12 @@ static void RenderSpectrum() {
   DrawArrow(peak.i << settings.stepsCount);
   DrawSpectrum();
   DrawRssiTriggerLevel();
-  DrawF(peak.f);
+  DrawF(GetScreenF(peak.f));
   DrawNums();
 }
 
 static void RenderStill() {
-  DrawF(fMeasure);
+  DrawF(GetScreenF(fMeasure));
 
   const uint8_t METER_PAD_LEFT = 3;
   uint8_t *ln = gFrameBuffer[2];
@@ -1129,17 +1138,16 @@ static void RenderStill() {
     uint8_t hiddenMenuLen = ARRAY_SIZE(hiddenRegisterSpecs);
     uint8_t offset = Clamp(hiddenMenuState - 2, 1, hiddenMenuLen - 5);
     for (int i = 0; i < 5; ++i) {
-      RegisterSpec s = hiddenRegisterSpecs[i + offset];
+      RegisterSpec rs = hiddenRegisterSpecs[i + offset];
       bool isCurrent = hiddenMenuState == i + offset;
-      sprintf(String, "%s%x %s: %u", isCurrent ? ">" : " ", s.num, s.name,
-              BK4819_GetRegValue(s));
+      sprintf(String, "%s%x %s: %u", isCurrent ? ">" : " ", rs.num, rs.name,
+              BK4819_GetRegValue(rs));
       UI_PrintStringSmallest(String, 0, i * 6 + 26, false, true);
     }
   } else {
 #endif
     const uint8_t PAD_LEFT = 4;
     const uint8_t CELL_WIDTH = 30;
-    uint8_t offset = PAD_LEFT;
     uint8_t row = 3;
 
     for (int i = 0, idx = 1; idx < ARRAY_SIZE(registerSpecs); ++i, ++idx) {
@@ -1147,18 +1155,18 @@ static void RenderStill() {
         row += 2;
         i = 0;
       }
-      offset = PAD_LEFT + i * CELL_WIDTH;
+      const uint8_t offset = PAD_LEFT + i * CELL_WIDTH;
       if (menuState == idx) {
         for (int j = 0; j < CELL_WIDTH; ++j) {
           gFrameBuffer[row][j + offset] = 0xFF;
           gFrameBuffer[row + 1][j + offset] = 0xFF;
         }
       }
-      RegisterSpec s = registerSpecs[idx];
-      sprintf(String, "%s", s.name);
+      RegisterSpec rs = registerSpecs[idx];
+      sprintf(String, "%s", rs.name);
       UI_PrintStringSmallest(String, offset + 2, row * 8 + 2, false,
                              menuState != idx);
-      sprintf(String, "%u", BK4819_GetRegValue(s));
+      sprintf(String, "%u", BK4819_GetRegValue(rs));
       UI_PrintStringSmallest(String, offset + 2, (row + 1) * 8 + 1, false,
                              menuState != idx);
     }
@@ -1357,9 +1365,9 @@ static void Tick() {
 }
 
 static void AutomaticPresetChoose(uint32_t f) {
-  const FreqPreset *p;
+  f = GetScreenF(f);
   for (uint8_t i = 0; i < ARRAY_SIZE(freqPresets); ++i) {
-    p = &freqPresets[i];
+    const FreqPreset *p = &freqPresets[i];
     if (f >= p->fStart && f <= p->fEnd) {
       ApplyPreset(*p);
     }
@@ -1372,7 +1380,7 @@ void APP_RunSpectrum() {
   // AM_fix_init();
 
   // TX here coz it always? set to active VFO
-  VFO_Info_t vfo = gEeprom.VfoInfo[gEeprom.TX_CHANNEL];
+  VFO_Info_t vfo = gEeprom.VfoInfo[gEeprom.TX_VFO];
   initialFreq = vfo.pRX->Frequency;
   currentFreq = initialFreq;
   settings.scanStepIndex = gStepSettingToIndex[vfo.STEP_SETTING];

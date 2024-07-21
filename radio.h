@@ -62,6 +62,12 @@ enum STEP_Setting_t {
   STEP_100_0kHz,
 };
 
+typedef enum UpconverterTypes {
+    UPCONVERTER_OFF,
+    UPCONVERTER_50M,
+    UPCONVERTER_125M,
+} UpconverterTypes;
+
 extern const char *modulationTypeOptions[5];
 extern const char *vfoStateNames[];
 extern const char *powerNames[];
@@ -105,7 +111,7 @@ typedef struct VFO_Info_t {
   uint32_t FREQUENCY_OF_DEVIATION;
   uint16_t StepFrequency;
   uint8_t CHANNEL_SAVE;
-  uint8_t FREQUENCY_DEVIATION_SETTING;
+  uint8_t OFFSET_DIR;
   uint8_t SquelchOpenRSSIThresh;
   uint8_t SquelchOpenNoiseThresh;
   uint8_t SquelchCloseGlitchThresh;
@@ -138,6 +144,7 @@ extern DCS_CodeType_t gSelectedCodeType;
 extern uint8_t gSelectedCode;
 
 extern STEP_Setting_t gStepSetting;
+extern UpconverterTypes gUpconverter;
 
 extern VfoState_t VfoState[2];
 
@@ -153,7 +160,8 @@ uint32_t GetOffsetedF(VFO_Info_t *pInfo, uint32_t f);
 void RADIO_ApplyOffset(VFO_Info_t *pInfo);
 void RADIO_SelectVfos(void);
 void RADIO_SetupRegisters(bool bSwitchToFunction0);
-void RADIO_SetTxParameters(void);
+void RADIO_enableTX(void);
+void RADIO_disableTX(void);
 
 void RADIO_SetVfoState(VfoState_t State);
 void RADIO_PrepareTX(void);

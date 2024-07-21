@@ -15,14 +15,14 @@
  */
 
 #include <string.h>
-#include "app/aircopy.h"
-#include "driver/st7565.h"
-#include "external/printf/printf.h"
-#include "misc.h"
-#include "radio.h"
-#include "ui/aircopy.h"
-#include "ui/helper.h"
-#include "ui/inputbox.h"
+#include "../app/aircopy.h"
+#include "../driver/st7565.h"
+#include "../external/printf/printf.h"
+#include "../misc.h"
+#include "../radio.h"
+#include "aircopy.h"
+#include "helper.h"
+#include "inputbox.h"
 
 void UI_DisplayAircopy(void)
 {
@@ -42,7 +42,7 @@ void UI_DisplayAircopy(void)
 	if (gInputBoxIndex == 0) {
 		NUMBER_ToDigits(gRxVfo->ConfigRX.Frequency, String);
 		UI_DisplayFrequency(String, 16, 2, 0, 0);
-		UI_DisplaySmallDigits(2, String + 6, 97, 3);
+		UI_DisplaySmallDigits(2, String + 7, 97, 3);
 	} else {
 		UI_DisplayFrequency(gInputBox, 16, 2, 1, 0);
 	}

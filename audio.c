@@ -69,6 +69,9 @@ void AUDIO_PlayBeep(BEEP_Type_t Beep) {
 #endif
   SYSTEM_DelayMs(20);
   switch (Beep) {
+  case BEEP_TEST:
+    ToneFrequency = 4000;
+    break;
   case BEEP_1KHZ_60MS_OPTIONAL:
     ToneFrequency = 1000;
     break;
@@ -128,7 +131,7 @@ void AUDIO_PlayBeep(BEEP_Type_t Beep) {
   }
 }
 
-void AUDIO_PlayMelody(const Note *melody, uint8_t size){
+void AUDIO_PlayMelody(const Note *melody, uint8_t size) {
 
   if (gCurrentFunction == FUNCTION_RECEIVE ||
       gCurrentFunction == FUNCTION_MONITOR
@@ -169,7 +172,7 @@ void AUDIO_PlayMelody(const Note *melody, uint8_t size){
                                           BK4819_REG_30_ENABLE_TX_DSP);
   for (uint8_t i = 0; i < size; i++) {
     Note n = melody[i];
-    BK4819_WriteRegister(BK4819_REG_71, (uint16_t)((n.f * 1032444) / 100000));
+    BK4819_SetToneFrequency(n.f);
     SYSTEM_DelayMs(n.dur);
   }
 

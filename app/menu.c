@@ -17,27 +17,28 @@
 #include "finput.h"
 #include <string.h>
 #if !defined(ENABLE_OVERLAY)
-#include "ARMCM0.h"
+#include "../external/CMSIS_5/Device/ARM/ARMCM0/Include/ARMCM0.h"
 #endif
+#include "../audio.h"
+#include "../board.h"
+#include "../bsp/dp32g030/gpio.h"
+#include "../driver/backlight.h"
+#include "../driver/gpio.h"
+#include "../driver/keyboard.h"
+#include "../frequencies.h"
+#include "../misc.h"
+#include "../radio.h"
+#include "../settings.h"
 #include "app/dtmf.h"
 #include "app/generic.h"
 #include "app/menu.h"
 #include "app/scanner.h"
-#include "audio.h"
-#include "board.h"
-#include "bsp/dp32g030/gpio.h"
-#include "driver/backlight.h"
-#include "driver/gpio.h"
-#include "driver/keyboard.h"
-#include "frequencies.h"
-#include "misc.h"
-#include "settings.h"
 #if defined(ENABLE_OVERLAY)
-#include "sram-overlay.h"
+#include "../sram-overlay.h"
 #endif
-#include "ui/inputbox.h"
-#include "ui/menu.h"
-#include "ui/ui.h"
+#include "../ui/inputbox.h"
+#include "../ui/menu.h"
+#include "../ui/ui.h"
 
 void MENU_StartCssScan(int8_t Direction) {
   gCssScanMode = CSS_SCAN_MODE_SCANNING;
@@ -84,6 +85,7 @@ int MENU_GetLimits(uint8_t Cursor, uint8_t *pMin, uint8_t *pMax) {
   case MENU_PONMSG:
   case MENU_ROGER:
   case MENU_ALL_TX:
+  case MENU_UPCONVERTER:
     *pMin = 0;
     *pMax = 2;
     break;
@@ -115,7 +117,7 @@ int MENU_GetLimits(uint8_t Cursor, uint8_t *pMin, uint8_t *pMax) {
     break;
   case MENU_W_N:
     *pMin = 0;
-    *pMax = ARRAY_SIZE(bwNames) - 1;
+    *pMax = 1;
     break;
   case MENU_AM:
     *pMin = 0;
@@ -186,7 +188,7 @@ void MENU_AcceptSetting(void) {
   case MENU_SQL:
     gEeprom.SQUELCH_LEVEL = gSubMenuSelection;
     gRequestSaveSettings = true;
-    gVfoConfigureMode = VFO_CONFIGURE_1;
+    gVfoConfigureMode = VFO_CONFIGURE;
     return;
 
   case MENU_STEP:
@@ -246,7 +248,7 @@ void MENU_AcceptSetting(void) {
     return;
 
   case MENU_SFT_D:
-    gTxVfo->FREQUENCY_DEVIATION_SETTING = gSubMenuSelection;
+    gTxVfo->OFFSET_DIR = gSubMenuSelection;
     gRequestSaveChannel = 1;
     return;
 
@@ -276,7 +278,7 @@ void MENU_AcceptSetting(void) {
 #ifndef ENABLE_KEEPNAMEONSAVE
     gEeprom.MrChannel[0] = gSubMenuSelection;
 #else
-    gEeprom.MrChannel[gEeprom.TX_CHANNEL] = gSubMenuSelection;
+    gEeprom.MrChannel[gEeprom.TX_VFO] = gSubMenuSelection;
 #endif
     return;
 
@@ -348,14 +350,14 @@ void MENU_AcceptSetting(void) {
   case MENU_S_ADD1:
     gTxVfo->SCANLIST1_PARTICIPATION = gSubMenuSelection;
     SETTINGS_UpdateChannel(gTxVfo->CHANNEL_SAVE, gTxVfo, true);
-    gVfoConfigureMode = VFO_CONFIGURE_1;
+    gVfoConfigureMode = VFO_CONFIGURE;
     gFlagResetVfos = true;
     return;
 
   case MENU_S_ADD2:
     gTxVfo->SCANLIST2_PARTICIPATION = gSubMenuSelection;
     SETTINGS_UpdateChannel(gTxVfo->CHANNEL_SAVE, gTxVfo, true);
-    gVfoConfigureMode = VFO_CONFIGURE_1;
+    gVfoConfigureMode = VFO_CONFIGURE;
     gFlagResetVfos = true;
     return;
 
@@ -440,6 +442,10 @@ void MENU_AcceptSetting(void) {
 
   case MENU_RESET:
     BOARD_FactoryReset(gSubMenuSelection);
+    return;
+
+  case MENU_UPCONVERTER:
+    gUpconverter = gSubMenuSelection;
     return;
 
   case MENU_350TX:
@@ -564,6 +570,10 @@ void MENU_ShowCurrentSetting(void) {
     gSubMenuSelection = 0;
     break;
 
+  case MENU_UPCONVERTER:
+    gSubMenuSelection = gUpconverter;
+    break;
+
   case MENU_R_CTCS:
     if (gTxVfo->ConfigRX.CodeType == CODE_TYPE_CONTINUOUS_TONE) {
       gSubMenuSelection = gTxVfo->ConfigRX.Code + 1;
@@ -595,7 +605,7 @@ void MENU_ShowCurrentSetting(void) {
     break;
 
   case MENU_SFT_D:
-    gSubMenuSelection = gTxVfo->FREQUENCY_DEVIATION_SETTING;
+    gSubMenuSelection = gTxVfo->OFFSET_DIR;
     break;
 
   case MENU_OFFSET:
@@ -618,7 +628,7 @@ void MENU_ShowCurrentSetting(void) {
 #ifndef ENABLE_KEEPNAMEONSAVE
     gSubMenuSelection = gEeprom.MrChannel[0];
 #else
-    gSubMenuSelection = gEeprom.MrChannel[gEeprom.TX_CHANNEL];
+    gSubMenuSelection = gEeprom.MrChannel[gEeprom.TX_VFO];
 #endif
     break;
 
@@ -751,8 +761,8 @@ void MENU_ShowCurrentSetting(void) {
     gSubMenuSelection =
         RADIO_FindNextChannel(gEeprom.MrChannel[0], 1, false, 1);
 #else
-    gSubMenuSelection = RADIO_FindNextChannel(
-        gEeprom.MrChannel[gEeprom.TX_CHANNEL], 1, false, 1);
+    gSubMenuSelection =
+        RADIO_FindNextChannel(gEeprom.MrChannel[gEeprom.TX_VFO], 1, false, 1);
 #endif
     break;
 

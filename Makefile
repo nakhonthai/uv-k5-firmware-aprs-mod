@@ -2,15 +2,15 @@ TARGET = firmware
 
 ENABLE_AIRCOPY := 0
 ENABLE_AM_FIX := 1
-ENABLE_FMRADIO := 1
+ENABLE_FMRADIO := 0
 ENABLE_OVERLAY := 0
 ENABLE_SPECTRUM := 1
 ENABLE_SWD := 0
-ENABLE_TX1750 := 1
+ENABLE_TX1750 := 0
 ENABLE_UART := 1
 ENABLE_NOSCANTIMEOUT := 1
 ENABLE_KEEPNAMEONSAVE := 1
-ENABLE_ALL_REGISTERS := 0
+ENABLE_ALL_REGISTERS := 1
 ENABLE_FASTER_CHANNEL_SCAN := 1
 ENABLE_UART_CAT := 1
 
@@ -57,6 +57,7 @@ OBJS += driver/systick.o
 ifeq ($(ENABLE_UART),1)
 OBJS += driver/uart.o
 endif
+# OBJS += protocols/ook.o
 
 # Main
 OBJS += app/action.o
@@ -75,6 +76,8 @@ endif
 OBJS += app/generic.o
 OBJS += app/main.o
 OBJS += app/menu.o
+OBJS += app/appmenu.o
+OBJS += app/contextmenu.o
 OBJS += app/scanner.o
 ifeq ($(ENABLE_SPECTRUM), 1)
 OBJS += app/spectrum.o
@@ -108,11 +111,19 @@ OBJS += ui/inputbox.o
 OBJS += ui/lock.o
 OBJS += ui/main.o
 OBJS += ui/menu.o
+OBJS += ui/appmenu.o
+OBJS += ui/contextmenu.o
 OBJS += ui/rssi.o
 OBJS += ui/scanner.o
 OBJS += ui/status.o
 OBJS += ui/ui.o
 OBJS += ui/welcome.o
+
+OBJS += ui/split.o
+
+OBJS += apps/abscanner.o
+OBJS += apps/scanlist.o
+
 OBJS += version.o
 
 OBJS += main.o

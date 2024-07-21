@@ -30,6 +30,7 @@
 #include "../driver/st7565.h"
 #include "../driver/system.h"
 #include "../driver/systick.h"
+#include "../external/CMSIS_5/Device/ARM/ARMCM0/Include/ARMCM0.h"
 #include "../external/printf/printf.h"
 #include "../font.h"
 #include "../frequencies.h"
@@ -40,7 +41,6 @@
 #include "../settings.h"
 #include "../ui/battery.h"
 #include "../ui/helper.h"
-#include "ARMCM0.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -120,6 +120,16 @@ typedef struct FreqPreset {
 } FreqPreset;
 
 static const FreqPreset freqPresets[] = {
+    {"160m Ham Band", 181000, 200000, STEPS_128, STEP_1_0kHz, MOD_USB,
+     BK4819_FILTER_BW_NARROWER},
+    {"80m Ham Band", 350000, 380000, STEPS_128, STEP_1_0kHz, MOD_USB,
+     BK4819_FILTER_BW_NARROWER},
+    {"40m Ham Band", 700000, 720000, STEPS_128, STEP_1_0kHz, MOD_USB,
+     BK4819_FILTER_BW_NARROWER},
+    {"30m Ham Band", 1010000, 1015000, STEPS_128, STEP_1_0kHz, MOD_USB,
+     BK4819_FILTER_BW_NARROWER},
+    {"20m Ham Band", 1400000, 1435000, STEPS_128, STEP_1_0kHz, MOD_USB,
+     BK4819_FILTER_BW_NARROWER},
     {"16m Broadcast", 1748000, 1790000, STEPS_128, STEP_5_0kHz, MOD_AM,
      BK4819_FILTER_BW_NARROW},
     {"17m Ham Band", 1806800, 1816800, STEPS_128, STEP_1_0kHz, MOD_USB,
@@ -200,6 +210,7 @@ static const RegisterSpec hiddenRegisterSpecs[] = {
     {"IF step1x", 0x3D, 0, 0xFFFF, 1},
     {"RFfiltBW1.7-4.5khz ", 0x43, 12, 0b111, 1},
     {"RFfiltBWweak1.7-4.5khz", 0x43, 9, 0b111, 1},
+    {"AFTxLPF2fltBW1.7-4.5khz", 0x43, 6, 0b111, 1},
     {"BW Mode Selection", 0x43, 4, 0b11, 1},
     {"XTAL F Low-16bits", 0x3B, 0, 0xFFFF, 1},
     {"XTAL F Low-16bits 100", 0x3B, 0, 0xFFFF, 100},
@@ -341,7 +352,6 @@ static const RegisterSpec hiddenRegisterSpecs[] = {
     {"PA Gain2 Tuning", 0x36, 0, 0b111, 1},
     {"RF TxDeviation ON", 0x40, 12, 1, 1},
     {"RF Tx Deviation", 0x40, 0, 0xFFF, 10},
-    {"AFTxLPF2fltBW1.7-4.5khz", 0x43, 6, 0b111, 1},
     {"300Hz AF Resp K Tx", 0x44, 0, 0xFFFF, 100},
     {"300Hz AF Resp K Tx", 0x45, 0, 0xFFFF, 100},
 
@@ -358,4 +368,3 @@ static const RegisterSpec hiddenRegisterSpecs[] = {
 void APP_RunSpectrum(void);
 
 #endif /* ifndef SPECTRUM_H */
-
